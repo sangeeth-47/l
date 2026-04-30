@@ -959,7 +959,7 @@
                     nameInput.classList.add('success');
                     nameInput.classList.remove('error');
 
-                    nameMessage.textContent = '✨ Welcome, my dearest ' + enteredName + '! ✨';
+                    nameMessage.textContent = '✨ Welcome, my dearest ' + (enteredName ? enteredName.toUpperCase() : 'UNKNOWN') + '! ✨';
                     nameMessage.className = 'message success';
 
                     spawnMultipleHearts(10,
@@ -1119,9 +1119,7 @@
                 setTimeout(() => {
                     btnYes2.style.transform = '';
                     switchScreen(screenForever, screenCelebration);
-                    celebrationName.textContent =
-                        '💜 ' + (userName || VALID_NAME.charAt(0).toUpperCase() + VALID_NAME.slice(1)) +
-                        ' 💜';
+                    celebrationName.textContent = '💜 ' + (userName ? userName.toUpperCase() : 'UNKNOWN') + ' 💜';
                     spawnMultipleHearts(30);
                     burstParticles(100, canvasWidth / 2, canvasHeight / 2);
                     setTimeout(() => {
