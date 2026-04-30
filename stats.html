@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine Stats | NEO</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-deep: #05050f;
+            --bg-card: #0a0a1a;
+            --cyan: #00f0ff;
+            --cyan-dim: #00c8d4;
+            --magenta: #d400ff;
+            --magenta-dim: #a000c8;
+            --purple: #7b2fff;
+            --gold: #ffb800;
+            --neon-green: #39ff14;
+            --border-glow: rgba(0, 240, 255, 0.35);
+            --text-primary: #e0e0f0;
+            --text-secondary: #a0a0c0;
+            --glass-bg: rgba(10, 10, 30, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ── STARFIELD CANVAS ── */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── SCANLINE OVERLAY ── */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.03) 2px,
+                    rgba(0, 0, 0, 0.03) 4px);
+        }
+
+        /* ── GRID BG ── */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+        }
+
+        /* ── MAIN CONTAINER ── */
+        .container {
+            max-width: 1050px;
+            margin: auto;
+            padding: 25px 20px 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ── HEADER ── */
+        .main-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .main-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--cyan), #8eb8ff, var(--magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 0 18px rgba(180, 100, 255, 0.6));
+            animation: headerPulse 3s ease-in-out infinite;
+            position: relative;
+            display: inline-block;
+        }
+        @keyframes headerPulse {
+            0%,
+            100% {
+                filter: drop-shadow(0 0 18px rgba(180, 100, 255, 0.6));
+            }
+            50% {
+                filter: drop-shadow(0 0 32px rgba(0, 240, 255, 0.9));
+            }
+        }
+        .main-header .subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            letter-spacing: 5px;
+            color: var(--cyan-dim);
+            opacity: 0.8;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ── CARD BASE ── */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px 22px;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 30px rgba(0, 0, 0, 0.5),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            transition: all 0.35s ease;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(0, 240, 255, 0.5),
+                    rgba(180, 0, 255, 0.5),
+                    transparent);
+            opacity: 0.7;
+            transition: opacity 0.5s;
+        }
+        .card:hover::before {
+            opacity: 1;
+        }
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(180, 0, 255, 0.35),
+                    rgba(0, 240, 255, 0.35),
+                    transparent);
+            opacity: 0.45;
+        }
+        .card h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+            font-size: 1.15rem;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+        .card h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 35px;
+            height: 2px;
+            background: var(--cyan);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* ── LOGIN CARD (FUTURISTIC) ── */
+        #loginBox {
+            max-width: 460px;
+            margin: 60px auto 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+                0 0 60px rgba(100, 0, 200, 0.25),
+                0 0 120px rgba(0, 180, 255, 0.12),
+                inset 0 0 30px rgba(120, 0, 255, 0.04);
+            animation: loginFloat 5s ease-in-out infinite;
+            border-radius: 20px;
+            padding: 32px 28px 28px;
+        }
+        @keyframes loginFloat {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+        #loginBox::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 22px;
+            background: linear-gradient(45deg,
+                    var(--cyan),
+                    var(--magenta),
+                    var(--purple),
+                    var(--cyan));
+            background-size: 400% 400%;
+            z-index: -1;
+            animation: borderGlow 6s ease infinite;
+            opacity: 0.7;
+        }
+        @keyframes borderGlow {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            25% {
+                background-position: 100% 0%;
+            }
+            50% {
+                background-position: 100% 100%;
+            }
+            75% {
+                background-position: 0% 100%;
+            }
+        }
+        #loginBox .login-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(0, 240, 255, 0.2), rgba(120, 0, 255, 0.55));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+            box-shadow:
+                0 0 35px rgba(0, 220, 255, 0.4),
+                0 0 70px rgba(150, 0, 255, 0.3);
+            animation: iconPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes iconPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 35px rgba(0, 220, 255, 0.4), 0 0 70px rgba(150, 0, 255, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 55px rgba(0, 240, 255, 0.7), 0 0 100px rgba(200, 0, 255, 0.5);
+            }
+        }
+        #loginBox .login-icon .ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: ringRotate 8s linear infinite;
+        }
+        #loginBox .login-icon .ring:nth-child(2) {
+            width: 85%;
+            height: 85%;
+            animation-duration: 12s;
+            animation-direction: reverse;
+            border-color: rgba(0, 240, 255, 0.35);
+        }
+        @keyframes ringRotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        #loginBox h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 4px;
+            margin-bottom: 6px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(150, 180, 255, 0.7);
+        }
+        #loginBox h2::after {
+            display: none;
+        }
+        #loginBox .login-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 6px;
+            color: var(--cyan-dim);
+            margin-bottom: 22px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+        #loginBox .input-group {
+            position: relative;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        #loginBox .input-group label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: var(--cyan-dim);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+            transition: color 0.3s;
+        }
+        #loginBox .input-group:focus-within label {
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+        #loginBox input {
+            width: 100%;
+            padding: 13px 16px;
+            padding-right: 44px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            outline: none;
+            position: relative;
+        }
+        #loginBox input::placeholder {
+            color: rgba(180, 180, 210, 0.35);
+            letter-spacing: 1px;
+        }
+        #loginBox input:focus {
+            border-color: var(--cyan);
+            box-shadow:
+                0 0 20px rgba(0, 240, 255, 0.25),
+                0 0 45px rgba(0, 200, 255, 0.1),
+                inset 0 0 15px rgba(0, 240, 255, 0.04);
+            background: rgba(0, 10, 25, 0.7);
+        }
+        #loginBox .input-icon {
+            position: absolute;
+            right: 14px;
+            top: 38px;
+            font-size: 1.1rem;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #loginBox .input-group:focus-within .input-icon {
+            opacity: 0.9;
+        }
+        #loginBox button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #1a0050, #0d1b3e, #1a0050);
+            background-size: 200% 200%;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            animation: btnBgShift 4s ease infinite;
+            box-shadow: 0 0 25px rgba(100, 0, 200, 0.3);
+        }
+        @keyframes btnBgShift {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+        #loginBox button:hover {
+            box-shadow:
+                0 0 40px rgba(0, 240, 255, 0.45),
+                0 0 80px rgba(150, 0, 255, 0.35),
+                0 0 120px rgba(0, 200, 255, 0.2);
+            border-color: var(--cyan);
+            letter-spacing: 6px;
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #250070, #0f224f, #250070);
+            background-size: 200% 200%;
+        }
+        #loginBox button:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+            box-shadow: 0 0 60px rgba(0, 240, 255, 0.7);
+        }
+        #loginBox button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.15),
+                    transparent);
+            transform: skewX(-25deg);
+            animation: btnShine 3s ease-in-out infinite;
+        }
+        @keyframes btnShine {
+            0%,
+            100% {
+                left: -60%;
+            }
+            50% {
+                left: 120%;
+            }
+        }
+        #loginError {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: #ff4060 !important;
+            margin-top: 12px;
+            text-shadow: 0 0 12px rgba(255, 60, 80, 0.6);
+            min-height: 20px;
+            animation: errorFlicker 0.5s ease-out;
+        }
+        @keyframes errorFlicker {
+            0%,
+            20% {
+                opacity: 0.3;
+            }
+            40% {
+                opacity: 1;
+            }
+            60% {
+                opacity: 0.4;
+            }
+            80%,
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ── LOADING ── */
+        #loading {
+            text-align: center;
+            margin-top: 30px;
+            display: none;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 3px;
+            color: var(--cyan);
+            font-size: 0.9rem;
+            animation: loadBlink 1s step-end infinite;
+            text-shadow: 0 0 15px var(--cyan);
+        }
+        @keyframes loadBlink {
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ── SUMMARY GRID ── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        .stat {
+            background: rgba(20, 20, 45, 0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 18px 14px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: #d0d0f0;
+        }
+        .stat:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 28px rgba(0, 180, 255, 0.15);
+            transform: translateY(-3px);
+            color: #fff;
+        }
+        .stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .stat:hover::before {
+            opacity: 0.8;
+        }
+
+        /* ── TABLES ── */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .table thead th {
+            background: rgba(20, 20, 50, 0.8);
+            padding: 12px 10px;
+            border-bottom: 2px solid rgba(0, 240, 255, 0.3);
+            text-align: left;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            color: var(--cyan-dim);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .table tbody td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #c8c8e8;
+            white-space: nowrap;
+        }
+        .table tbody tr {
+            transition: all 0.25s ease;
+        }
+        .table tbody tr:hover {
+            background: rgba(0, 240, 255, 0.04);
+            box-shadow: inset 3px 0 0 var(--cyan);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            #loginBox {
+                margin: 30px auto 0;
+                padding: 24px 16px 20px;
+                border-radius: 16px;
+            }
+            #loginBox h2 {
+                font-size: 1.1rem;
+                letter-spacing: 2px;
+            }
+            #loginBox button {
+                font-size: 0.85rem;
+                letter-spacing: 2px;
+                padding: 12px;
+            }
+            .card {
+                padding: 16px 12px;
+                border-radius: 12px;
+            }
+            .card h2 {
+                font-size: 0.95rem;
+                letter-spacing: 1px;
+            }
+            .stat {
+                font-size: 0.85rem;
+                padding: 14px 10px;
+            }
+            .table thead th,
+            .table tbody td {
+                padding: 7px 6px;
+                font-size: 0.7rem;
+            }
+            .main-header h1 {
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- STARFIELD CANVAS -->
+    <canvas id="starfield"></canvas>
+
+    <!-- SCANLINES -->
+    <div class="scanlines"></div>
+
+    <!-- GRID BACKGROUND -->
+    <div class="grid-bg"></div>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="main-header">
+            <h1>⬟ DASHBOARD ⬟</h1>
+            <div class="subtitle">// Encrypted connection</div>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="loginBox" class="card">
+            <div class="login-icon">
+                <span style="position:relative;z-index:2;">🛡️</span>
+                <div class="ring"></div>
+                <div class="ring"></div>
+            </div>
+            <h2>ACCESS TERMINAL</h2>
+            <div class="login-sub">Credentials required</div>
+            <div class="input-group">
+                <label>▸ Ident Key</label>
+                <input id="username" placeholder="Enter ident key..." autocomplete="off">
+                <span class="input-icon">🔑</span>
+            </div>
+            <div class="input-group">
+                <label>▸ Pass</label>
+                <input id="password" type="password" placeholder="Enter pass...">
+                <span class="input-icon">🔒</span>
+            </div>
+            <button onclick="login()">⚡ AUTHENTICATE ⚡</button>
+            <div id="loginError"></div>
+        </div>
+
+        <div id="loading" class="loading">⟳ DECRYPTING DATA STREAM...</div>
+
+        <!-- SUMMARY -->
+        <div class="card" id="summaryCard" style="display:none;">
+            <h2>📊 System Overview</h2>
+            <div class="grid" id="summaryGrid"></div>
+        </div>
+
+        <!-- RECENT -->
+        <div class="card" id="recentCard" style="display:none;">
+            <h2>📋 Recent Responses</h2>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Q1</th>
+                            <th>No Clicks Q1</th>
+                            <th>Q2</th>
+                            <th>No Clicks Q2</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- HOURLY -->
+        <div class="card" id="hourlyCard" style="display:none;">
+            <h2>⏱️ Hourly Breakdown</h2>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hour</th>
+                            <th>Total</th>
+                            <th>Yes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hourlyTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "https://api.sangeeth47.in/api/valentine-response-get-stats";
+        let authHeader = null;
+
+        // ── STARFIELD ──
+        (function() {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            const STAR_COUNT = 180;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', () => {
+                resize();
+                initStars();
+            });
+
+            function initStars() {
+                stars = [];
+                for (let i = 0; i < STAR_COUNT; i++) {
+                    stars.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 1.8 + 0.3,
+                        speed: Math.random() * 0.25 + 0.08,
+                        opacity: Math.random(),
+                        pulseSpeed: Math.random() * 0.02 + 0.005,
+                        hue: Math.random() < 0.3 ?
+                            (Math.random() < 0.5 ? 195 : 280) // cyan or magenta-ish
+                            :
+                            220 + Math.random() * 40 // blue-white
+                    });
+                }
+            }
+            initStars();
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                stars.forEach(s => {
+                    s.y += s.speed;
+                    if (s.y > canvas.height + 5) {
+                        s.y = -5;
+                        s.x = Math.random() * canvas.width;
+                    }
+                    s.opacity += s.pulseSpeed;
+                    if (s.opacity > 1 || s.opacity < 0.15) s.pulseSpeed *= -1;
+
+                    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
+                    const alpha = s.opacity * 0.9;
+                    glow.addColorStop(0, `hsla(${s.hue},80%,75%,${alpha})`);
+                    glow.addColorStop(0.5, `hsla(${s.hue},60%,55%,${alpha*0.4})`);
+                    glow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = `hsla(${s.hue},70%,82%,${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // ── LOGIN ──
+        function login() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const errorEl = document.getElementById("loginError");
+
+            if (!username || !password) {
+                errorEl.innerText = "⚠ IDENT KEY & CYPHER PHRASE REQUIRED";
+                errorEl.style.animation = 'none';
+                void errorEl.offsetWidth;
+                errorEl.style.animation = 'errorFlicker 0.5s ease-out';
+                return;
+            }
+
+            authHeader = "Basic " + btoa(`${username}:${password}`);
+            loadStats();
+        }
+
+        // ── ALLOW ENTER KEY ──
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('loginBox').style.display !== 'none') {
+                login();
+            }
+        });
+
+        // ── FETCH DATA ──
+        async function loadStats() {
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("loginError").innerText = "";
+
+            try {
+                const res = await fetch(API_URL, {
+                    headers: { "Authorization": authHeader }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("⛔ ACCESS DENIED — INVALID CREDENTIALS");
+                }
+
+                const text = await res.text();
+                if (!text) throw new Error("⚠ EMPTY DATA STREAM");
+
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch {
+                    console.error("RAW:", text);
+                    throw new Error("⚠ CORRUPTED DATA PACKET");
+                }
+
+                if (!json.success) throw new Error("⚠ API RETURNED FAILURE");
+
+                const data = json.data;
+
+                document.getElementById("loginBox").style.display = "none";
+                document.getElementById("loading").style.display = "none";
+
+                renderSummary(data.summary);
+                renderRecent(data.recentResponses);
+                renderHourly(data.hourlyBreakdown);
+
+            } catch (err) {
+                document.getElementById("loading").style.display = "none";
+                const errorEl = document.getElementById("loginError");
+                errorEl.innerText = err.message;
+                errorEl.style.animation = 'none';
+                void errorEl.offsetWidth;
+                errorEl.style.animation = 'errorFlicker 0.5s ease-out';
+                console.error(err);
+            }
+        }
+
+        function getVal(obj, key) {
+            return obj[key] ?? obj[key.toLowerCase()] ?? obj[key.toUpperCase()] ?? 0;
+        }
+
+        // ── RENDER SUMMARY ──
+        function renderSummary(summary) {
+            document.getElementById("summaryGrid").innerHTML = `
+            <div class="stat">📡 Total: <b>${summary.totalResponses ?? 0}</b></div>
+            <div class="stat">🎯 Success Rate: <b>${summary.successRateQ1 ?? "0%"}</b></div>
+            <div class="stat">✅ Q1 Yes: <b>${summary.question1?.yes ?? 0}</b></div>
+            <div class="stat">❌ Q1 No: <b>${summary.question1?.no ?? 0}</b></div>
+            <div class="stat">✅ Q2 Yes: <b>${summary.question2?.yes ?? 0}</b></div>
+            <div class="stat">❌ Q2 No: <b>${summary.question2?.no ?? 0}</b></div>
+            <div class="stat">🖱️ Avg Q1 No Clicks: <b>${summary.question1?.averageNoClicks ?? 0}</b></div>
+            <div class="stat">🖱️ Avg Q2 No Clicks: <b>${summary.question2?.averageNoClicks ?? 0}</b></div>
+            <div class="stat">📅 Active Days: <b>${summary.uniqueDaysWithResponses ?? 0}</b></div>
+          `;
+            document.getElementById("summaryCard").style.display = "block";
+        }
+
+        // ── RENDER RECENT ──
+        function renderRecent(list) {
+            document.getElementById("recentTable").innerHTML = list.map(r => {
+                const q1No = Number(getVal(r, "Question1NoClickCount")) || 0;
+                const q2No = Number(getVal(r, "Question2NoClickCount")) || 0;
+                return `
+              <tr>
+                <td>${getVal(r, "UserName") || "-"}</td>
+                <td>${getVal(r, "Question1Response") || "-"}</td>
+                <td>${q1No}</td>
+                <td>${getVal(r, "Question2Response") || "-"}</td>
+                <td>${q2No}</td>
+                <td>${r.ResponseDateTime ? new Date(r.ResponseDateTime).toLocaleString() : "-"}</td>
+              </tr>
+            `;
+            }).join("");
+            document.getElementById("recentCard").style.display = "block";
+        }
+
+        // ── RENDER HOURLY ──
+        function renderHourly(list) {
+            document.getElementById("hourlyTable").innerHTML = list.map(h => `
+            <tr>
+              <td>🕐 ${getVal(h, "Hour")}:00</td>
+              <td>${getVal(h, "ResponseCount")}</td>
+              <td>${getVal(h, "YesCount")}</td>
+            </tr>
+          `).join("");
+            document.getElementById("hourlyCard").style.display = "block";
+        }
+    </script>
+</body>
+</html>

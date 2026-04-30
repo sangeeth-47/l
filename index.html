@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="love.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💜 A Special Message For You...</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -638,6 +639,11 @@
             let noClickCount1 = 0;
             let noClickCount2 = 0;
             let celebrationActive = false;
+            let q1Response = null; // Track first question response
+            let q2Response = null; // Track second question response
+            
+            // Generate unique session ID
+            const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             // ──────────────────────────────────────
             // CANVAS SETUP
@@ -893,6 +899,42 @@
             }
 
             // ──────────────────────────────────────
+            // SAVE RESPONSE TO DATABASE
+            // ──────────────────────────────────────
+            async function saveValentineResponse(name, q1Resp, q1NoClicks, q2Resp, q2NoClicks) {
+                try {
+                    const response = await fetch("https://api.sangeeth47.in/api/valentine-response-save", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            userName: name,
+                            question1Response: q1Resp,
+                            question1NoClickCount: q1NoClicks,
+                            question2Response: q2Resp,
+                            question2NoClickCount: q2NoClicks,
+                            sessionId: sessionId
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log("✨ Response saved successfully:", data.data);
+                        return true;
+                    } else {
+                        console.warn("Response save failed:", data.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error("Error saving response to database:", error);
+                    // Don't break the flow if API fails
+                    return false;
+                }
+            }
+
+            // ──────────────────────────────────────
             // NAME VALIDATION
             // ──────────────────────────────────────
             async function validateName() {
@@ -957,6 +999,7 @@
 
             // First "Yes" button
             btnYes1.addEventListener('click', () => {
+                q1Response = "Yes"; // Track response
                 spawnMultipleHearts(20, btnYes1.getBoundingClientRect().left + btnYes1.offsetWidth / 2,
                     btnYes1.getBoundingClientRect().top);
                 valentineMessage.textContent = 'Awww... you make my heart soar! 💖';
@@ -1060,11 +1103,16 @@
 
             // Second "Yes" button
             btnYes2.addEventListener('click', () => {
+                q2Response = "Yes"; // Track response
                 spawnMultipleHearts(25, btnYes2.getBoundingClientRect().left + btnYes2.offsetWidth / 2,
                     btnYes2.getBoundingClientRect().top);
                 foreverMessage.textContent = 'Forever and always... 💍💜';
                 foreverMessage.className = 'message success';
                 btnYes2.style.transform = 'scale(1.2)';
+                
+                // Save response to database
+                saveValentineResponse(userName, q1Response || "Yes", noClickCount1, q2Response, noClickCount2);
+                
                 celebrationActive = true;
                 burstParticles(150, canvasWidth / 2, canvasHeight / 2);
                 spawnConfetti(100);
